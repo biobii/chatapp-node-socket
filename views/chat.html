@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='UTF-8'>
+  <meta name="robots" content="noindex">
+  <link rel="shortcut icon" type="image/x-icon" href="//production-assets.codepen.io/assets/favicon/favicon-8ea04875e70c4b0bb41da869e81236e54394d63638a1ef12fa558a4a835f1164.ico" />
+  <link rel="mask-icon" type="" href="//production-assets.codepen.io/assets/favicon/logo-pin-f2d2b6d2c61838f7e76325261b7195c27224080bc099486ddd6dccb469b8e8e6.svg" color="#111" />
+  <link rel="canonical" href="https://codepen.io/emilcarlsson/pen/ZOQZaV?limit=all&page=74&q=contact+" />
+  <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
+
+  <script src="https://use.typekit.net/hoy3lrg.js"></script>
+  <script>try{Typekit.load({ async: true });}catch(e){}</script>
+  <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'><link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
+  <link rel="stylesheet" href="css/chatapp.css">
+</head>
+<body>
+<!-- 
+Follow me here:
+Twitter: https://twitter.com/thatguyemil
+Codepen: https://codepen.io/emilcarlsson/
+Website: http://emilcarlsson.se/
+-->
+
+<div id="frame">
+	<div id="sidepanel">
+		<div id="profile">
+			<div class="wrap">
+        <img id="profile-img" src="https://www.qualiscare.com/wp-content/uploads/2017/08/default-user.png" class="online" alt="" />
+				<p>{{ userName }}</p>
+			</div>
+		</div>
+		<div id="search">
+			<label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
+			<input type="text" placeholder="Search name..." />
+		</div>
+		<div id="contacts">
+			<ul>
+				<li class="contact">
+					<div class="wrap">
+						<span class="contact-status online"></span>
+            <img src="https://cdn0.iconfinder.com/data/icons/user-collection-4/512/users-512.png" alt="" />
+						<div class="meta">
+							<p class="name">Public Chat</p>
+							<p class="preview"></p>
+						</div>
+					</div>
+				</li>
+				<li v-for="user in onlineUsers" class="contact">
+					<div class="wrap">
+						<span class="contact-status online"></span>
+            <img src="https://www.qualiscare.com/wp-content/uploads/2017/08/default-user.png" alt="" />
+						<div class="meta">
+							<p class="name">{{ user.name }}</p>
+							<p class="preview"></p>
+						</div>
+					</div>
+				</li>
+			</ul>
+		</div>
+  </div>
+  
+	<div class="content">
+		<div class="contact-profile">
+    <img src="https://cdn0.iconfinder.com/data/icons/user-collection-4/512/users-512.png" alt="" />
+			<p>Public Chat</p>
+		</div>
+		<div class="messages">
+			<ul>
+        <li v-if="!chat.notif" v-for="chat in chats" :class="chat.ID === userID ? 'replies' : 'sent'">
+          <p>
+            <span style="font-weight: bold">{{ chat.name }}</span>
+            <br>
+            {{ chat.message }}
+          </p>
+        </li>
+        <p v-else style="padding: 18px; font-style: italic">{{ chat.message }}</p>
+			</ul>
+		</div>
+		<div class="message-input">
+			<div class="wrap">
+      <form action="#" @submit.prevent="submit">
+        <input type="text" placeholder="Ketik pesan..." v-model="sendChat" />
+        <button class="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
+      </form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="js/vue.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io()
+
+  new Vue({
+    el: '#frame',
+    created: function () {
+      this.socket = socket;
+      this.userID = localStorage.getItem('CHATAPP-ID')
+      this.userName = localStorage.getItem('CHATAPP-NAME')
+
+      if (!this.userID) {
+        window.location.href = '/'
+      }
+
+      this.socket.emit('userJoin', { ID: this.userID, name: this.userName })
+    },
+    mounted: function () {
+      let _this = this;
+
+      this.socket.on('chat', function (chat) {
+        _this.chats.push({
+          message: chat.message,
+          ID: chat.ID,
+          name: chat.name
+        })
+      })
+
+      this.socket.on('userJoin', function (clients) {
+        clients.forEach(client => {
+          if (client.name !== _this.userName) {
+            _this.onlineUsers.push(client)
+            _this.chats.push({ message: `${client.name} bergabung...`, notif: true })
+          }
+        })
+      })
+
+      this.socket.on('disconnect', function (clients) {
+        let index = clients.findIndex(c => c.name === _this.userName)
+        clients.splice(index, 1)
+        _this.onlineUsers = clients
+        _this.chats.push({ message: `${client.name} meninggalkan obrolan...`, notif: true })
+      })
+    },
+    data: {
+      sendChat: '',
+      chats: [],
+      onlineUsers: [],
+      socket: null,
+      userID: null,
+      userName: null
+    },
+    methods: {
+      submit: function () {
+        this.socket.emit('chat', { message: this.sendChat, ID: this.userID, name: this.userName })
+        this.sendChat = ''
+      },
+      generateID: function () {
+        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+      }
+    }
+  })
+</script>
+<script>
+
+</script>
+</body></html>
