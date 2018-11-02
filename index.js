@@ -36,4 +36,4 @@ io.on('connection', socket => {
   })
 })
 
-http.listen(process.env.PORT || 3000, '192.168.1.14' || 'localhost', () => console.log('SERVER RUNNING!'))
+http.listen(process.env.PORT || 3000, () => console.log('SERVER RUNNING!'))
